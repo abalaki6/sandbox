@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <exception>
  
-
 namespace po = boost::program_options;
 
 static int SIZEX = 800;
@@ -21,7 +20,8 @@ static bool pressed = false;
 static bool run_evolve = false;
 static bool DEBUG = false;
 
-inline double double_rand(const double & min, const double & max) {
+inline double double_rand(const double & min, const double & max) 
+{
     static thread_local std::mt19937 generator;
     std::uniform_real_distribution<double> distribution(min,max);
     return distribution(generator);
@@ -54,9 +54,12 @@ void evolve(double **data, double **buffer)
     double dt = dr * dr;
     double *u = *data;
     double *next_state = *buffer;
+    
     struct timeval start, end;
     gettimeofday(&start, NULL);
+    
     memcpy(next_state, u, SIZEX * SIZEY * sizeof(double));
+    
     for(int k = 0; k < ITER; k++)
     {
     #pragma omp parallel for private(i, j), shared(u, next_state, dt, dr, alpha)
@@ -64,24 +67,63 @@ void evolve(double **data, double **buffer)
         {
             if(i == 0)
             {
-                next_state[0]+= alpha * (u[1] + u[SIZEX] - 2 * u[0]); // j == 0
-                next_state[SIZEX - 1]+= alpha * (u[2 * SIZEX -1] + u[SIZEX - 2] - 2 * u[SIZEX - 1]); // j == SIZEX - 1
+                next_state[0]+= alpha * (
+                    u[1] + 
+                    u[SIZEX] - 
+                    2*u[0]); // j == 0
+
+                next_state[SIZEX - 1]+= alpha * (
+                    u[2 * SIZEX -1] + 
+                    u[SIZEX - 2] - 
+                    2*u[SIZEX - 1]); // j == SIZEX - 1
+
                 for(j = 1; j < SIZEX-1; j++)
-                    next_state[j]+= alpha * (u[SIZEX + j] + u[j + 1] + u[j - 1] - 3*u[j]);
+                    next_state[j]+= alpha * (
+                        u[SIZEX + j] +
+                        u[j + 1] +
+                        u[j - 1] -
+                        3*u[j]);
             }
             else if(i == SIZEY - 1)
             {
-                next_state[i*SIZEX]+= alpha * (u[(i-1)*SIZEX] + u[i*SIZEX + 1] - 2 * u[i*SIZEX]); // j == 0
-                next_state[i*SIZEX + SIZEX - 1]+= alpha * (u[(i-1)*SIZEX + SIZEX - 1] + u[i*SIZEX + SIZEX - 2] - 2 * u[i*SIZEX + SIZEX - 1]); // j == SIZEX - 1
+                next_state[i*SIZEX]+= alpha * (
+                    u[(i-1)*SIZEX] + 
+                    u[i*SIZEX + 1] - 
+                    2*u[i*SIZEX]); // j == 0
+
+                next_state[i*SIZEX + SIZEX - 1]+= alpha * (
+                    u[(i-1)*SIZEX + SIZEX - 1] + 
+                    u[i*SIZEX + SIZEX - 2] - 
+                    2*u[i*SIZEX + SIZEX - 1]); // j == SIZEX - 1
+
                 for(j = 1; j < SIZEX-1; j++)
-                    next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 3*u[i*SIZEX + j]);
+                    next_state[i*SIZEX + j]+= alpha * (
+                        u[(i-1)*SIZEX + j] + 
+                        u[i*SIZEX + j + 1] + 
+                        u[i*SIZEX + j - 1] - 
+                        3*u[i*SIZEX + j]);
             }
             else
             {
-                next_state[i * SIZEX]+= alpha * (u[(i-1)*SIZEX] + u[(i+1)*SIZEX] + u[i*SIZEX + 1] - 3*u[i*SIZEX]); // j == 0
-                next_state[i * SIZEX + SIZEX - 1]+= alpha * (u[(i-1)*SIZEX + SIZEX - 1] + u[(i+1)*SIZEX + SIZEX - 1] + u[i*SIZEX + SIZEX -2] - 3*u[i*SIZEX + SIZEX -1]); // j == SIZEX - 1
+                next_state[i * SIZEX]+= alpha * (
+                    u[(i-1)*SIZEX] + 
+                    u[(i+1)*SIZEX] + 
+                    u[i*SIZEX + 1] - 
+                    3*u[i*SIZEX]); // j == 0
+
+                next_state[i * SIZEX + SIZEX - 1]+= alpha * (
+                    u[(i-1)*SIZEX + SIZEX - 1] + 
+                    u[(i+1)*SIZEX + SIZEX - 1] + 
+                    u[i*SIZEX + SIZEX -2] - 
+                    3*u[i*SIZEX + SIZEX -1]); // j == SIZEX - 1
+                
                 for(j=1; j < SIZEX-1; j++)
-                    next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[(i+1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 4*u[i*SIZEX + j]); 
+                    next_state[i*SIZEX + j]+= alpha * (
+                        u[(i-1)*SIZEX + j] +
+                        u[(i+1)*SIZEX + j] +
+                        u[i*SIZEX + j + 1] + 
+                        u[i*SIZEX + j - 1] - 
+                        4*u[i*SIZEX + j]); 
             }
 
         }
@@ -93,18 +135,18 @@ void evolve(double **data, double **buffer)
     if(DEBUG)
     {
         double sum = 0.0;
-        #pragma omp parallel for private(i,j) reduction(+:sum), shared(next_state)
-        for(i=0; i < SIZEY; i++) for(j=0; j < SIZEX; j++)
-            sum += next_state[i*SIZEX + j];
+        #pragma omp parallel for private(i) reduction(+:sum), shared(next_state)
+        for(i=0; i < SIZEY*SIZEX; i++) sum += next_state[i];
+        
         gettimeofday(&end, NULL);
+        
         double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
             end.tv_usec - start.tv_usec) / 1.e3;
         std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
     }
 }
 
-
-int main( int argc, char** argv ) 
+void parse_arguments(int argc, char** argv)
 {
     try
     {
@@ -126,7 +168,7 @@ int main( int argc, char** argv )
         if(vmap.count("help"))
         {
             std::cout << desc;
-            return 0;
+            exit(0);
         }
         if(vmap.count("height"))
             SIZEY = vmap["height"].as<int>();
@@ -146,24 +188,29 @@ int main( int argc, char** argv )
     catch(std::exception& e)
     {
         std::cerr << "error: " << e.what() << std::endl;
-        return 1;
+        exit(1);
     }
     catch(...)
     {
         std::cerr << "error: Unknown error" << std::endl;
-        return 2;
+        exit(2);
     }
+}
+
+int main( int argc, char** argv ) 
+{
+    parse_arguments(argc, argv);
 
     double *data = new double[SIZEX*SIZEY];
     double *buffer = new double[SIZEX*SIZEY];
     cv::Mat image(SIZEY, SIZEX, CV_64F, data);
     cv::Mat scaled, color;
 
-    std::string name = "Display Window";
+    std::string name = "Heat equation visualization";
     cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
     cv::setMouseCallback(name, mouse_callback, nullptr);
     int val,x,y;
-    while( (val = cv::waitKey(1000/60)) != 27)
+    while( (val = cv::waitKey(1000/60)) != 27) // escape
     {
         if(val == 32) //space
         {

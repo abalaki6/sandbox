@@ -5,4 +5,6 @@ random code dump
 * opencv is requred
 * openmp is optional but recommended
 * boost is requred
-* `make heat_demo && ./heat_demo`
+* `make heat_demo`  
+`.\heat_demo -h`
+
