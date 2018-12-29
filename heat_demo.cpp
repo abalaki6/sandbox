@@ -5,6 +5,7 @@
 #include <iostream>
 #include <random>
 #include <sys/time.h>
+#include <exception>
  
 
 namespace po = boost::program_options;
@@ -18,6 +19,7 @@ static double alpha = 0.05;
 static int mouse_x, mouse_y;
 static bool pressed = false;
 static bool run_evolve = false;
+static bool DEBUG = false;
 
 inline double double_rand(const double & min, const double & max) {
     static thread_local std::mt19937 generator;
@@ -88,50 +90,69 @@ void evolve(double **data, double **buffer)
     *buffer = *data;
     *data = next_state;
 
-    double sum = 0.0;
-    #pragma omp parallel for private(i,j) reduction(+:sum), shared(next_state)
-    for(i=0; i < SIZEY; i++) for(j=0; j < SIZEX; j++)
-        sum += next_state[i*SIZEX + j];
-    gettimeofday(&end, NULL);
-    double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
-         end.tv_usec - start.tv_usec) / 1.e3;
-    std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
+    if(DEBUG)
+    {
+        double sum = 0.0;
+        #pragma omp parallel for private(i,j) reduction(+:sum), shared(next_state)
+        for(i=0; i < SIZEY; i++) for(j=0; j < SIZEX; j++)
+            sum += next_state[i*SIZEX + j];
+        gettimeofday(&end, NULL);
+        double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
+            end.tv_usec - start.tv_usec) / 1.e3;
+        std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
+    }
 }
 
 
 int main( int argc, char** argv ) 
 {
-    po::options_description desc("Allowed arguments");
-    desc.add_options()
-        ("help", "to get this message")
-        ("height", po::value<int>(), "set height of the window, default 600 px")
-        ("width", po::value<int>(), "set width of the window, default 800 px")
-        ("alpha", po::value<double>(), "alpha parameter of heat equation, default 0.05")
-        ("iter", po::value<int>(), "number of iterations per render, default 20")
-        ("size", po::value<int>(), "radius of the brush when drawing, default 15")
-        ("temp", po::value<double>(), "temperature of the brush, default 2.0");
-
-    po::variables_map vmap;
-    po::store(po::parse_command_line(argc, argv, desc), vmap);
-    po::notify(vmap);
-
-    if(vmap.count("help"))
+    try
     {
-        std::cout << desc;
-        return 0;
+        po::options_description desc("Allowed arguments");
+        desc.add_options()
+            ("help,h", "to get this message")
+            ("height,y", po::value<int>(), "set height of the window, default 600 px")
+            ("width,x", po::value<int>(), "set width of the window, default 800 px")
+            ("alpha,a", po::value<double>(), "alpha parameter of heat equation, default 0.05")
+            ("iter,i", po::value<int>(), "number of iterations per render, default 20")
+            ("size,s", po::value<int>(), "radius of the brush when drawing, default 15")
+            ("temp,t", po::value<double>(), "temperature of the brush, default 2.0")
+            ("debug,d", "debug flag to print extra states' info");
+
+        po::variables_map vmap;
+        po::store(po::parse_command_line(argc, argv, desc), vmap);
+        po::notify(vmap);
+
+        if(vmap.count("help"))
+        {
+            std::cout << desc;
+            return 0;
+        }
+        if(vmap.count("height"))
+            SIZEY = vmap["height"].as<int>();
+        if(vmap.count("width"))
+            SIZEX = vmap["width"].as<int>();
+        if(vmap.count("alpha"))
+            alpha = vmap["alpha"].as<double>();
+        if(vmap.count("iter"))
+            ITER = vmap["iter"].as<int>();
+        if(vmap.count("size"))
+            RADIUS = vmap["size"].as<int>();
+        if(vmap.count("temp"))
+            TEMPERATURE = vmap["temp"].as<double>();
+        if(vmap.count("debug"))
+            DEBUG = true;
     }
-    if(vmap.count("height"))
-        SIZEY = vmap["height"].as<int>();
-    if(vmap.count("width"))
-        SIZEX = vmap["width"].as<int>();
-    if(vmap.count("alpha"))
-        alpha = vmap["alpha"].as<double>();
-    if(vmap.count("iter"))
-        ITER = vmap["iter"].as<int>();
-    if(vmap.count("size"))
-        RADIUS = vmap["size"].as<int>();
-    if(vmap.count("temp"))
-        TEMPERATURE = vmap["temp"].as<double>();
+    catch(std::exception& e)
+    {
+        std::cerr << "error: " << e.what() << std::endl;
+        return 1;
+    }
+    catch(...)
+    {
+        std::cerr << "error: Unknown error" << std::endl;
+        return 2;
+    }
 
     double *data = new double[SIZEX*SIZEY];
     double *buffer = new double[SIZEX*SIZEY];
