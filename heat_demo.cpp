@@ -46,6 +46,7 @@ void mouse_callback(int event, int x, int y, int flags, void *data)
 
 void evolve(double **data, double **buffer)
 {
+    // ~ 24 bits of accuracy (as in of conservation only)
     int i,j;
     double dr = 1. / SIZEX;
     double dt = dr * dr;
@@ -59,7 +60,6 @@ void evolve(double **data, double **buffer)
     #pragma omp parallel for private(i, j), shared(u, next_state, dt, dr, alpha)
         for(i=0; i < SIZEY; i++)
         {
-            // leaks in corners in 15th bit of accuracy
             if(i == 0)
             {
                 next_state[0]+= alpha * (u[1] + u[SIZEX] - 2 * u[0]); // j == 0
@@ -78,7 +78,6 @@ void evolve(double **data, double **buffer)
             {
                 next_state[i * SIZEX]+= alpha * (u[(i-1)*SIZEX] + u[(i+1)*SIZEX] + u[i*SIZEX + 1] - 3*u[i*SIZEX]); // j == 0
                 next_state[i * SIZEX + SIZEX - 1]+= alpha * (u[(i-1)*SIZEX + SIZEX - 1] + u[(i+1)*SIZEX + SIZEX - 1] + u[i*SIZEX + SIZEX -2] - 3*u[i*SIZEX + SIZEX -1]); // j == SIZEX - 1
-                // 20 bits of accuracy
                 for(j=1; j < SIZEX-1; j++)
                     next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[(i+1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 4*u[i*SIZEX + j]); 
             }
@@ -91,7 +90,7 @@ void evolve(double **data, double **buffer)
 
     double sum = 0.0;
     #pragma omp parallel for private(i,j) reduction(+:sum), shared(next_state)
-    for(int i=1; i < SIZEY-1; i++) for(int j=1; j < SIZEX-1; j++)
+    for(i=0; i < SIZEY; i++) for(j=0; j < SIZEX; j++)
         sum += next_state[i*SIZEX + j];
     gettimeofday(&end, NULL);
     double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
