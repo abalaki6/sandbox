@@ -48,7 +48,7 @@ void mouse_callback(int event, int x, int y, int flags, void *data)
 
 void evolve(double **data, double **buffer)
 {
-    // ~ 24 bits of accuracy (as in of conservation only)
+    // ~ 62 bits of accuracy (as in of conservation only)
     int i,j;
     double dr = 1. / SIZEX;
     double dt = dr * dr;
@@ -67,18 +67,18 @@ void evolve(double **data, double **buffer)
         {
             if(i == 0)
             {
-                next_state[0]+= alpha * (
+                next_state[0]= u[0] + alpha * (
                     u[1] + 
                     u[SIZEX] - 
                     2*u[0]); // j == 0
 
-                next_state[SIZEX - 1]+= alpha * (
+                next_state[SIZEX - 1]= u[SIZEX - 1] + alpha * (
                     u[2 * SIZEX -1] + 
                     u[SIZEX - 2] - 
                     2*u[SIZEX - 1]); // j == SIZEX - 1
 
                 for(j = 1; j < SIZEX-1; j++)
-                    next_state[j]+= alpha * (
+                    next_state[j]= u[j] + alpha * (
                         u[SIZEX + j] +
                         u[j + 1] +
                         u[j - 1] -
@@ -86,18 +86,18 @@ void evolve(double **data, double **buffer)
             }
             else if(i == SIZEY - 1)
             {
-                next_state[i*SIZEX]+= alpha * (
+                next_state[i*SIZEX]= u[i*SIZEX] + alpha * (
                     u[(i-1)*SIZEX] + 
                     u[i*SIZEX + 1] - 
                     2*u[i*SIZEX]); // j == 0
 
-                next_state[i*SIZEX + SIZEX - 1]+= alpha * (
+                next_state[i*SIZEX + SIZEX - 1]= u[i*SIZEX + SIZEX - 1] + alpha * (
                     u[(i-1)*SIZEX + SIZEX - 1] + 
                     u[i*SIZEX + SIZEX - 2] - 
                     2*u[i*SIZEX + SIZEX - 1]); // j == SIZEX - 1
 
                 for(j = 1; j < SIZEX-1; j++)
-                    next_state[i*SIZEX + j]+= alpha * (
+                    next_state[i*SIZEX + j]= u[i*SIZEX + j] + alpha * (
                         u[(i-1)*SIZEX + j] + 
                         u[i*SIZEX + j + 1] + 
                         u[i*SIZEX + j - 1] - 
@@ -105,20 +105,20 @@ void evolve(double **data, double **buffer)
             }
             else
             {
-                next_state[i * SIZEX]+= alpha * (
+                next_state[i * SIZEX]= u[i * SIZEX] + alpha * (
                     u[(i-1)*SIZEX] + 
                     u[(i+1)*SIZEX] + 
                     u[i*SIZEX + 1] - 
                     3*u[i*SIZEX]); // j == 0
 
-                next_state[i * SIZEX + SIZEX - 1]+= alpha * (
+                next_state[i * SIZEX + SIZEX - 1]= u[i * SIZEX + SIZEX - 1] + alpha * (
                     u[(i-1)*SIZEX + SIZEX - 1] + 
                     u[(i+1)*SIZEX + SIZEX - 1] + 
                     u[i*SIZEX + SIZEX -2] - 
                     3*u[i*SIZEX + SIZEX -1]); // j == SIZEX - 1
                 
                 for(j=1; j < SIZEX-1; j++)
-                    next_state[i*SIZEX + j]+= alpha * (
+                    next_state[i*SIZEX + j]= u[i * SIZEX + j] + alpha * (
                         u[(i-1)*SIZEX + j] +
                         u[(i+1)*SIZEX + j] +
                         u[i*SIZEX + j + 1] + 
@@ -127,7 +127,12 @@ void evolve(double **data, double **buffer)
             }
 
         }
-        u = next_state;
+        if(k != ITER)
+        {
+            auto tmp = next_state;
+            next_state = u;
+            u = tmp;
+        }
     }
     *buffer = *data;
     *data = next_state;
