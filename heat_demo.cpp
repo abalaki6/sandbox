@@ -1,12 +1,20 @@
+#include <boost/config.hpp>
+#include <boost/program_options.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <random>
 #include <sys/time.h>
  
-#define SIZEX 800
-#define SIZEY 600
 
+namespace po = boost::program_options;
+
+static int SIZEX = 800;
+static int SIZEY = 600;
+static int ITER = 20;
+static int RADIUS = 15;
+static double TEMPERATURE = 2.0;
+static double alpha = 0.05; 
 static int mouse_x, mouse_y;
 static bool pressed = false;
 static bool run_evolve = false;
@@ -41,13 +49,12 @@ void evolve(double **data, double **buffer)
     int i,j;
     double dr = 1. / SIZEX;
     double dt = dr * dr;
-    double alpha = 0.05;
     double *u = *data;
     double *next_state = *buffer;
     struct timeval start, end;
     gettimeofday(&start, NULL);
     memcpy(next_state, u, SIZEX * SIZEY * sizeof(double));
-    for(int k = 0; k < 150; k++)
+    for(int k = 0; k < ITER; k++)
     {
     #pragma omp parallel for private(i, j), shared(u, next_state, dt, dr, alpha)
         for(i=0; i < SIZEY; i++)
@@ -95,6 +102,37 @@ void evolve(double **data, double **buffer)
 
 int main( int argc, char** argv ) 
 {
+    po::options_description desc("Allowed arguments");
+    desc.add_options()
+        ("help", "to get this message")
+        ("height", po::value<int>(), "set height of the window, default 600 px")
+        ("width", po::value<int>(), "set width of the window, default 800 px")
+        ("alpha", po::value<double>(), "alpha parameter of heat equation, default 0.05")
+        ("iter", po::value<int>(), "number of iterations per render, default 20")
+        ("size", po::value<int>(), "radius of the brush when drawing, default 15")
+        ("temp", po::value<double>(), "temperature of the brush, default 2.0");
+
+    po::variables_map vmap;
+    po::store(po::parse_command_line(argc, argv, desc), vmap);
+    po::notify(vmap);
+
+    if(vmap.count("help"))
+    {
+        std::cout << desc;
+        return 0;
+    }
+    if(vmap.count("height"))
+        SIZEY = vmap["height"].as<int>();
+    if(vmap.count("width"))
+        SIZEX = vmap["width"].as<int>();
+    if(vmap.count("alpha"))
+        alpha = vmap["alpha"].as<double>();
+    if(vmap.count("iter"))
+        ITER = vmap["iter"].as<int>();
+    if(vmap.count("size"))
+        RADIUS = vmap["size"].as<int>();
+    if(vmap.count("temp"))
+        TEMPERATURE = vmap["temp"].as<double>();
 
     double *data = new double[SIZEX*SIZEY];
     double *buffer = new double[SIZEX*SIZEY];
@@ -115,7 +153,7 @@ int main( int argc, char** argv )
         {
             x = mouse_x;
             y = mouse_y;
-            cv::circle(image, cv::Point2d(x,y), 15, cv::Scalar(2.0), -1);
+            cv::circle(image, cv::Point2d(x,y), RADIUS, cv::Scalar(TEMPERATURE), -1);
         }
         image.convertTo(scaled, CV_8UC1,255, 0);
         cv::applyColorMap(scaled, color, cv::COLORMAP_JET);
