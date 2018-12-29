@@ -4,14 +4,14 @@
 #include <random>
 #include <sys/time.h>
  
-#define SIZEX 600
-#define SIZEY 400
+#define SIZEX 800
+#define SIZEY 600
 
 static int mouse_x, mouse_y;
 static bool pressed = false;
 static bool run_evolve = false;
 
-inline double intRand(const double & min, const double & max) {
+inline double double_rand(const double & min, const double & max) {
     static thread_local std::mt19937 generator;
     std::uniform_real_distribution<double> distribution(min,max);
     return distribution(generator);
@@ -50,21 +50,46 @@ void evolve(double **data, double **buffer)
     for(int k = 0; k < 150; k++)
     {
     #pragma omp parallel for private(i, j), shared(u, next_state, dt, dr, alpha)
-        for(i=1; i < SIZEY-1; i++)
+        for(i=0; i < SIZEY; i++)
         {
-            for(j=1; j < SIZEX-1; j++)
+            // leaks in corners in 15th bit of accuracy
+            if(i == 0)
             {
-                next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[(i+1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 4*u[i*SIZEX + j]); 
+                next_state[0]+= alpha * (u[1] + u[SIZEX] - 2 * u[0]); // j == 0
+                next_state[SIZEX - 1]+= alpha * (u[2 * SIZEX -1] + u[SIZEX - 2] - 2 * u[SIZEX - 1]); // j == SIZEX - 1
+                for(j = 1; j < SIZEX-1; j++)
+                    next_state[j]+= alpha * (u[SIZEX + j] + u[j + 1] + u[j - 1] - 3*u[j]);
             }
+            else if(i == SIZEY - 1)
+            {
+                next_state[i*SIZEX]+= alpha * (u[(i-1)*SIZEX] + u[i*SIZEX + 1] - 2 * u[i*SIZEX]); // j == 0
+                next_state[i*SIZEX + SIZEX - 1]+= alpha * (u[(i-1)*SIZEX + SIZEX - 1] + u[i*SIZEX + SIZEX - 2] - 2 * u[i*SIZEX + SIZEX - 1]); // j == SIZEX - 1
+                for(j = 1; j < SIZEX-1; j++)
+                    next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 3*u[i*SIZEX + j]);
+            }
+            else
+            {
+                next_state[i * SIZEX]+= alpha * (u[(i-1)*SIZEX] + u[(i+1)*SIZEX] + u[i*SIZEX + 1] - 3*u[i*SIZEX]); // j == 0
+                next_state[i * SIZEX + SIZEX - 1]+= alpha * (u[(i-1)*SIZEX + SIZEX - 1] + u[(i+1)*SIZEX + SIZEX - 1] + u[i*SIZEX + SIZEX -2] - 3*u[i*SIZEX + SIZEX -1]); // j == SIZEX - 1
+                // 20 bits of accuracy
+                for(j=1; j < SIZEX-1; j++)
+                    next_state[i*SIZEX + j]+= alpha * (u[(i-1)*SIZEX + j] + u[(i+1)*SIZEX + j] + u[i*SIZEX + j + 1] + u[i*SIZEX + j - 1] - 4*u[i*SIZEX + j]); 
+            }
+
         }
         u = next_state;
     }
     *buffer = *data;
     *data = next_state;
+
+    double sum = 0.0;
+    #pragma omp parallel for private(i,j) reduction(+:sum), shared(next_state)
+    for(int i=1; i < SIZEY-1; i++) for(int j=1; j < SIZEX-1; j++)
+        sum += next_state[i*SIZEX + j];
     gettimeofday(&end, NULL);
     double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
          end.tv_usec - start.tv_usec) / 1.e3;
-    std::cout << "time (ms): " << delta << std::endl;
+    std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
 }
 
 
