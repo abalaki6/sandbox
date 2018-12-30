@@ -57,9 +57,7 @@ void evolve(double **data, double **buffer)
     
     struct timeval start, end;
     gettimeofday(&start, NULL);
-    
-    memcpy(next_state, u, SIZEX * SIZEY * sizeof(double));
-    
+
     for(int k = 0; k < ITER; k++)
     {
     #pragma omp parallel for private(i, j), shared(u, next_state, dt, dr, alpha)
@@ -147,7 +145,8 @@ void evolve(double **data, double **buffer)
         
         double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
             end.tv_usec - start.tv_usec) / 1.e3;
-        std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
+        printf("time (ms): %.5f \t total: %.3f \t average: %.4f\n", delta, sum, sum / SIZEX / SIZEY);
+        // std::cout << "time (ms): " << delta << "\t\ttotal: " << sum << std::endl;
     }
 }
 
