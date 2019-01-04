@@ -1,0 +1,15 @@
+*
+
+!*.*
+!*/
+
+.vscode/*
+*.o
+*.os
+
+!Makefile
+!*.c
+!*.cpp
+!*.h
+!*.hpp
+!*.glsl
