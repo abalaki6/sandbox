@@ -20,10 +20,10 @@ class heat_parameters
     bool debug;      // debug mode for extra input
 
     boost::program_options::options_description desc;
+    heat_parameters();
 public:
     static heat_parameters& get_instance();
 
-    heat_parameters();
     void parse_cl(const int argc, const char **argv);
 
 
