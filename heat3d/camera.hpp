@@ -12,14 +12,32 @@
 class camera
 {
     GLFWwindow *window;
-    shader &program;
+    shader *program;
     
+    glm::vec3 position;
+    glm::vec3 up;
+    glm::vec3 right;
+    glm::vec3 direction;
+
+    glm::vec3 w_up;
+
+    double yaw;
+    double pitch;
+    double speed;
+    double mouse_sensitivity;
+    double fov;
+
+    camera();
 public:
     static camera& get_camera();
 
-    static camera& use_free_camera(GLFWwindow *window, shader& program);
+    static camera& use_free_camera(GLFWwindow *window, shader* program);
 
     void process_input();
+
+
+    camera(const camera&) = delete;
+    void operator=(const camera&) = delete;
 };
 
 #endif // CAMERA_H
