@@ -16,7 +16,9 @@ delta_y(1),
 delta_z(1),
 alpha(0.05),
 num_iter(20),
-debug(false)
+debug(false),
+width(800),
+height(600)
 {
     desc.add_options()
         ("help,h", "print this message.")
@@ -27,4 +29,9 @@ debug(false)
         ("alpha,a", po::value<double>(), "thermal diffusivity of the system.")
         ("d", "run with debug information.")
         ("iter,i", po::value<size_t>(), "number of iterations per frame");
+}
+
+void heat_parameters::parse_cl(const int argc, const char **argv)
+{
+
 }

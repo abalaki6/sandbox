@@ -19,6 +19,9 @@ class heat_parameters
     size_t num_iter; // number of iterations per frame
     bool debug;      // debug mode for extra input
 
+    int width;       // window's width in pixels
+    int height;      // window's height in pixels
+
     boost::program_options::options_description desc;
     heat_parameters();
 public:
@@ -35,6 +38,8 @@ public:
     inline double get_alpha() const {return alpha;}
     inline size_t get_num_iter() const {return num_iter;}
     inline bool is_debug() const {return debug;}
+    inline int get_window_width() const {return width;}
+    inline int get_window_height() const {return height;}
 
     ~heat_parameters(){};
 
