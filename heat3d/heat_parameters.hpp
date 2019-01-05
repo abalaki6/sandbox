@@ -10,17 +10,23 @@
 
 class heat_parameters
 {
-    double delta_t;  // timestep
-    double delta_x;  // spacestep in x axis
-    double delta_y;  // spacestep in y axis
-    double delta_z;  // spacestep in z axis
-    double alpha;    // thermal diffusivity
+    double delta_t;                   // timestep
+    double delta_x;                   // spacestep in x axis
+    double delta_y;                   // spacestep in y axis
+    double delta_z;                   // spacestep in z axis
+    double alpha;                     // thermal diffusivity
 
-    size_t num_iter; // number of iterations per frame
-    bool debug;      // debug mode for extra input
+    size_t num_iter;                  // number of iterations per frame
+    bool debug;                       // debug mode for extra input
 
-    int width;       // window's width in pixels
-    int height;      // window's height in pixels
+    int width;                        // window's width in pixels
+    int height;                       // window's height in pixels
+
+    double camera_yaw;                // moving "side"
+    double camera_pitch;              // moving "up"
+    double camera_speed;              // speed that cemera moves is direction
+    double camera_mouse_sensitivity;  // how sensitive zooming is
+    double camera_fov;                // equivaletly to zoom
 
     boost::program_options::options_description desc;
     heat_parameters();
@@ -40,6 +46,11 @@ public:
     inline bool is_debug() const {return debug;}
     inline int get_window_width() const {return width;}
     inline int get_window_height() const {return height;}
+    inline double get_camera_yaw() const {return camera_yaw;}
+    inline double get_camera_pitch() const {return camera_pitch;}
+    inline double get_camera_speed() const {return camera_speed;}
+    inline double get_camera_fov() const {return camera_fov;}
+    inline double get_camera_mouse_sensitivity() const {return camera_mouse_sensitivity;}
 
     ~heat_parameters(){};
 
