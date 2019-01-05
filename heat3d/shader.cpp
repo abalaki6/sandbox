@@ -3,8 +3,10 @@
 shader::shader(const std::string fragment_shader_filename, const std::string vertex_shader_filename)
 {
     // read source code from files
-    const char* vertex_code = load_file(vertex_shader_filename).c_str();
-    const char* fragment_code = load_file(fragment_shader_filename).c_str();
+    auto vcode = load_file(vertex_shader_filename);
+    auto fcode = load_file(fragment_shader_filename);
+    const char* vertex_code = vcode.c_str();
+    const char* fragment_code = fcode.c_str();
     // compile and link shaders to new program
     vertex = compile_shader(vertex_code, GL_VERTEX_SHADER);
     fragment = compile_shader(fragment_code, GL_FRAGMENT_SHADER);
@@ -93,7 +95,22 @@ void shader::check_compilation_errors(GLuint id, bool is_shader)
 
 }
 
-void shader::use_program()
+void shader::use_program() const
 {
     glUseProgram(id);
+}
+
+void shader::set_window(GLFWwindow *window)
+{
+    this->window = window;
+}
+
+GLFWwindow* shader::get_window() const
+{
+    return window;
+}
+
+GLuint shader::get_id() const
+{
+    return id;
 }

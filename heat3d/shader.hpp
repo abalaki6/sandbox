@@ -13,6 +13,7 @@ class shader
 {
     GLuint id;
     GLuint vertex, fragment; 
+    GLFWwindow *window;
 
     std::string load_file(const std::string file_name);
     GLuint compile_shader(const char* code, GLenum shader_type);
@@ -22,7 +23,10 @@ class shader
 public:
     shader(const std::string fragment_shader_filename, const std::string vertex_shader_filename);
 
-    void use_program();
+    void use_program() const;
+    void set_window(GLFWwindow *window);
+    GLFWwindow* get_window() const;
+    GLuint get_id() const;
 };
 
 #endif // SHADER_H
