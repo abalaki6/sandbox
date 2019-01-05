@@ -3,10 +3,7 @@
 #include "shader.hpp"
 #include "heat_parameters.hpp"
 
-
 int main(int argc, char const *argv[]);
-
-
 
 int main(int argc, char const *argv[])
 {
