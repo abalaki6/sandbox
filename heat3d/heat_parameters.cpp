@@ -10,10 +10,10 @@ heat_parameters& heat_parameters::get_instance()
 
 heat_parameters::heat_parameters()
 : 
-delta_t(1),
-delta_x(1),
-delta_y(1),
-delta_z(1),
+delta_t(1e-6),
+delta_x(1e-3),
+delta_y(1e-3),
+delta_z(1e-3),
 alpha(0.05),
 num_iter(20),
 debug(false),
