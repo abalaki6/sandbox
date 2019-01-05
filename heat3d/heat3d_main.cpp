@@ -11,18 +11,20 @@ int main(int argc, char const *argv[])
 {
     // cli parser
     heat_parameters::get_instance().parse_cl(argc, argv);
-    // init GLAD and GLFW contenct, set callbacks for free camera
+    // init GLAD and GLFW contenct
     GLFWwindow* window = init_gl();
-    camera::use_free_camera(window);
     // load shaders
     shader program("shaders/fragment.glsl", "shaders/vertex.glsl");
     program.set_window(window);
+    // set up free camera
+    camera::use_free_camera(window, &program);
     // create heat model with provided cli
     auto model = heat_solver(program);
 
     glEnable(GL_DEPTH_TEST);  
     while (!glfwWindowShouldClose(window))
     {
+        camera::get_camera().process_input(); 
         // check for escape event
         if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         {
