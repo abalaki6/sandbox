@@ -62,12 +62,12 @@ camera_fov(45.)
             "number of iterations per frame."
         )
         (
-            "width,w",
+            "width",
             po::value<int>()->default_value(width),
             "width of the window in startup."
         )
         (
-            "height,h",
+            "height",
             po::value<int>()->default_value(height),
             "height of the window in startup."
         )
