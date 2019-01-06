@@ -4,6 +4,7 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -27,6 +28,9 @@ public:
     void set_window(GLFWwindow *window);
     GLFWwindow* get_window() const;
     GLuint get_id() const;
+
+    // shader setters
+    void set_mat4(const std::string& name, const glm::mat4& mat) const;
 };
 
 #endif // SHADER_H
