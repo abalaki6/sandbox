@@ -5,7 +5,7 @@ in vec3 aColor;
 
 out vec3 outColor;
 
-uniform mat4 PV
+uniform mat4 PV;
 
 void main()
 {
