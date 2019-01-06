@@ -4,9 +4,9 @@ GLuint heat_solver::bind_vertex_location()
 {
     float vertices[] = {
         // positions         // colors
-         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom left
-         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f   // top 
+         0.5f, -.5f, -5.0f,  1.0f, 0.0f, 0.0f,  // bottom right
+        -0.5f, -.5f, -1.0f,  0.0f, 1.0f, 0.0f,  // bottom left
+         0.0f,  .5f, -1.0f,  0.0f, 0.0f, 1.0f   // top 
 
     };
     
@@ -57,7 +57,6 @@ void heat_solver::render()
 {
     glBindVertexArray(posVAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glfwSwapBuffers(program.get_window());
 }
 
 double* heat_solver::get_current_state_3channes()
