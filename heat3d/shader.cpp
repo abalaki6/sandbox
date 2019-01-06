@@ -117,5 +117,5 @@ GLuint shader::get_id() const
 
 void shader::set_mat4(const std::string& name, const glm::mat4& mat) const
 {
-    glUniform4fv(glGetUniformLocation(id, name.c_str()), 1, &mat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
