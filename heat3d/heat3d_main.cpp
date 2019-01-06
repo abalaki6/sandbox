@@ -33,11 +33,13 @@ int main(int argc, char const *argv[])
         // clean buffers
         glClearColor(0.f, 0.f, 0.f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        camera::get_camera().update_shader();
         // single evolution
         model.evolve();
         model.update_color_map();
         model.render();
-        
+
+        glfwSwapBuffers(program.get_window());
         glfwPollEvents();
     }
 
