@@ -9,6 +9,9 @@
 #include <math.h>
 #include "shader.hpp"
 #include "heat_parameters.hpp"
+#include <glm/ext.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 
 class camera
 {
@@ -39,6 +42,8 @@ class camera
     void process_input_free_camera();
     void update_position(const camera_direciton, const float dt);
     void zoom_hanlder(double dy);
+    void mouse_event_static(double xpos, double ypos);
+    void mouse_event_dynamic(float dt);
 public:
     static camera& get_camera();
 
