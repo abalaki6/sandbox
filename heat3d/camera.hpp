@@ -6,11 +6,13 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <math.h>
 #include "shader.hpp"
-
+#include "heat_parameters.hpp"
 
 class camera
 {
+    enum camera_direciton {FRONT, BACK, LEFT, RIGHT};
     GLFWwindow *window;
     shader *program;
     
@@ -27,13 +29,26 @@ class camera
     double mouse_sensitivity;
     double fov;
 
+    double aspect;
+
+    void (camera::*input_handler)();
+
     camera();
+
+    void normalize_basis();
+    void process_input_free_camera();
+    void update_position(const camera_direciton, const float dt);
+    void zoom_hanlder(double dy);
 public:
     static camera& get_camera();
 
     static camera& use_free_camera(GLFWwindow *window, shader* program);
 
     void process_input();
+    void update_shader();
+    glm::mat4 get_view_mat();
+    glm::mat4 get_proj_mat();
+
 
 
     camera(const camera&) = delete;
