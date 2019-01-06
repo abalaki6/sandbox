@@ -7,6 +7,7 @@
 #include <exception>
 #include <iostream>
 
+#define DEBUG heat_parameters::get_instance().is_debug()
 
 class heat_parameters
 {

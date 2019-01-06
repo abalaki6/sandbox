@@ -21,9 +21,9 @@ width(800),
 height(600),
 camera_yaw(-90),
 camera_pitch(0),
-camera_speed(2.5),
+camera_speed(1.5),
 camera_mouse_sensitivity(0.1),
-camera_fov(45.)
+camera_fov(90.)
 {
     desc.add_options()
         (
