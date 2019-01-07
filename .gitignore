@@ -6,6 +6,9 @@
 .vscode/*
 *.o
 *.os
+*.mp4
+*.avi
+
 
 !Makefile
 !*.c
