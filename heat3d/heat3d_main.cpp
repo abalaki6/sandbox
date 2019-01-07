@@ -3,6 +3,8 @@
 #include "heat_solver.hpp"
 #include "camera.hpp"
 
+#include <opencv2/opencv.hpp>
+
 GLFWwindow* init_gl();
 int main(int argc, char const *argv[]);
 
@@ -20,8 +22,36 @@ int main(int argc, char const *argv[])
     camera::use_free_camera(window, &program);
     // create heat model with provided cli
     auto model = heat_solver(program);
+    
+    // video capture
+    cv::VideoWriter *vcap = nullptr;
+    char *screen_pixels = nullptr;
+    if(DEBUG)
+    {
+        vcap = new cv::VideoWriter(heat_parameters::get_instance().get_capture_name(),
+            CV_FOURCC('M','J','P','G'),
+            10,
+            cv::Size(heat_parameters::get_instance().get_window_width(),
+                    heat_parameters::get_instance().get_window_height()),
+            true);
+
+        if(!vcap)
+        {
+            std::cerr << "ERROR::HEAT3D_MAIN: failed to create video writer." << std::endl;
+        }
+        else
+        {
+            screen_pixels = new char[3 *
+                heat_parameters::get_instance().get_window_width() *
+                heat_parameters::get_instance().get_window_height()];
+        }
+    }
 
     glEnable(GL_DEPTH_TEST);  
+    
+    std::string name = "echo";
+    cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
+
     while (!glfwWindowShouldClose(window))
     {
         camera::get_camera().process_input(); 
@@ -39,8 +69,37 @@ int main(int argc, char const *argv[])
         model.update_color_map();
         model.render();
 
+        if(vcap)
+        {
+            glReadPixels(0,
+                0,
+                heat_parameters::get_instance().get_window_width(),
+                heat_parameters::get_instance().get_window_height(),
+                GL_BGR,
+                GL_UNSIGNED_BYTE,
+                screen_pixels
+            );
+            cv::Mat frame(
+                heat_parameters::get_instance().get_window_width(),
+                heat_parameters::get_instance().get_window_height(),
+                CV_8UC3,
+                screen_pixels
+            );
+
+            cv::imshow(name, frame);
+            cv::waitKey(1);
+            // vcap->write(frame);
+        }
+
+
         glfwSwapBuffers(program.get_window());
         glfwPollEvents();
+    }
+
+    if(screen_pixels)
+    {
+        delete screen_pixels;
+        vcap->release();
     }
 
     glfwTerminate();
@@ -53,14 +112,14 @@ GLFWwindow* init_gl()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
     auto w = heat_parameters::get_instance().get_window_width();
     auto h = heat_parameters::get_instance().get_window_height();
-    GLFWwindow* window = glfwCreateWindow(w, h, "head3d demo", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(w, h, "heat3d demo", NULL, NULL);
     if(window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -71,7 +130,7 @@ GLFWwindow* init_gl()
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int w, int h)
     {
-        glViewport(0, 0, w, h);
+        // glViewport(0, 0, w, h);
     }
     );
 
