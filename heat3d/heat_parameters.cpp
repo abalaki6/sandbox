@@ -23,7 +23,8 @@ camera_yaw(-90),
 camera_pitch(0),
 camera_speed(1.5),
 camera_mouse_sensitivity(0.1),
-camera_fov(90.)
+camera_fov(90.),
+capture_name("heat3t_video.avi")
 {
     desc.add_options()
         (
@@ -95,6 +96,11 @@ camera_fov(90.)
             "fov", 
             po::value<double>()->default_value(camera_fov), 
             "fov of the camera."
+        )
+        (
+            "video",
+            po::value<std::string>()->default_value(capture_name),
+            "name of recorded video, video is recorded if debug flag specified."
         );
 }
 

@@ -29,6 +29,8 @@ class heat_parameters
     double camera_mouse_sensitivity;  // how sensitive zooming is
     double camera_fov;                // equivaletly to zoom
 
+    std::string capture_name;         // name of output video file
+
     boost::program_options::options_description desc;
     heat_parameters();
 public:
@@ -52,7 +54,7 @@ public:
     inline double get_camera_speed() const {return camera_speed;}
     inline double get_camera_fov() const {return camera_fov;}
     inline double get_camera_mouse_sensitivity() const {return camera_mouse_sensitivity;}
-
+    inline std::string get_capture_name() const {return capture_name;}
     ~heat_parameters(){};
 
     heat_parameters(const heat_parameters&) = delete;
