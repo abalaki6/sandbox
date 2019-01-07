@@ -80,15 +80,15 @@ int main(int argc, char const *argv[])
                 screen_pixels
             );
             cv::Mat frame(
-                heat_parameters::get_instance().get_window_width(),
                 heat_parameters::get_instance().get_window_height(),
+                heat_parameters::get_instance().get_window_width(),
                 CV_8UC3,
                 screen_pixels
             );
 
             cv::imshow(name, frame);
             cv::waitKey(1);
-            // vcap->write(frame);
+            vcap->write(frame);
         }
 
 
