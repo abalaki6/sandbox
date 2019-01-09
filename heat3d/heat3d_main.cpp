@@ -30,7 +30,7 @@ int main(int argc, char const *argv[])
     {
         vcap = new cv::VideoWriter(heat_parameters::get_instance().get_capture_name(),
             CV_FOURCC('M','J','P','G'),
-            10,
+            120,
             cv::Size(heat_parameters::get_instance().get_window_width(),
                     heat_parameters::get_instance().get_window_height()),
             true);
@@ -85,9 +85,7 @@ int main(int argc, char const *argv[])
                 CV_8UC3,
                 screen_pixels
             );
-
-            cv::imshow(name, frame);
-            cv::waitKey(1);
+            cv::flip(frame, frame, 0);
             vcap->write(frame);
         }
 
