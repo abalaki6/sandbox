@@ -24,8 +24,9 @@ GLuint heat_solver::bind_vertex_location()
     // replcate to 3 after done debugging grid rendering
     #define NUM_PAR SIX
 
-    float *pos = new float[NUM_PAR*X*Y*Z]; // fo debug 6 , replace to 3 in release
 
+    const size_t NUM_POINTS = NUM_PAR * X * Y * Z;
+    float *pos = new float[NUM_POINTS]; // fo debug 6 , replace to 3 in release
     // predefine locations
     size_t i;
 
@@ -33,27 +34,27 @@ GLuint heat_solver::bind_vertex_location()
     auto dy = heat_parameters::get_instance().get_dy();
     auto dz = heat_parameters::get_instance().get_dz();
 
-    #pragma omp parallel for private(i,j,k), shared(X,Y,Z,pos,dx,dy,dz)
+    #pragma omp parallel for private(i), shared(X,Y,Z,pos,dx,dy,dz)
     for(i = 0; i < X; i++)
     {
         // replace 6 to 3 after debugging
         auto *loc = pos + NUM_PAR * i * Y * Z; 
 
-        auto x = i * dx;
+        float x = i * dx;
         for(size_t j = 0; j < Y; j++)
         {
-            auto y = j * Y;
+            float y = j * dy;
             for(size_t k = 0; k < Z; k++)
             {
-                auto z = k * dz;
+                float z = k * dz;
                 // define grid
                 loc[0] = x;
                 loc[1] = y;
                 loc[2] = z;
                 // for debug define color map as well
                 #if NUM_PAR == SIX
-                    loc[3] = 1.0f;
-                    loc[4] = 0.0f;
+                    loc[3] = 0.0f;
+                    loc[4] = 1.0f;
                     loc[5] = 0.0f;
                 #endif
                 // iterate to next element after debug replace 6 to 3
@@ -69,7 +70,7 @@ GLuint heat_solver::bind_vertex_location()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, NUM_PAR * X * Y * Z, pos, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, NUM_POINTS * sizeof(float), pos, GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, NUM_PAR * sizeof(float), (void*)0);
@@ -85,7 +86,7 @@ GLuint heat_solver::bind_vertex_location()
 
 
     // after mapping vertces delete CPU buffer
-    delete pos;
+    delete[] pos;
     // undef temporal constants
     #undef SIX
     #undef THREE
@@ -114,15 +115,16 @@ heat_solver::heat_solver(const shader& program)
 {
     auto &parser = heat_parameters::get_instance();
     // render in domain [-1, 1]^3
-    X = 2 / parser.get_dx();
-    Y = 2 / parser.get_dy();
-    Z = 2 / parser.get_dz();
+    X = 1 / parser.get_dx() + 1;
+    Y = 1 / parser.get_dy() + 1;
+    Z = 1 / parser.get_dz() + 1;
 
     posVAO = bind_vertex_location();
 }
 
 void heat_solver::evolve()
 {
+    return;
     auto num_iter = heat_parameters::get_instance().get_num_iter();
     auto dt = heat_parameters::get_instance().get_dt();
     auto dx = heat_parameters::get_instance().get_dx();
@@ -163,7 +165,7 @@ void heat_solver::update_color_map()
 void heat_solver::render()
 {
     glBindVertexArray(posVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_POINTS, 0, X * Y * Z);
 }
 
 double* heat_solver::get_current_state_3channes()
