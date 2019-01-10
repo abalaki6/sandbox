@@ -156,13 +156,13 @@ void parse_arguments(int argc, char** argv)
     {
         po::options_description desc("Allowed arguments");
         desc.add_options()
-            ("help,h", "to get this message")
-            ("height,y", po::value<int>(), "set height of the window, default 600 px")
-            ("width,x", po::value<int>(), "set width of the window, default 800 px")
-            ("alpha,a", po::value<double>(), "alpha parameter of heat equation, default 0.05")
-            ("iter,i", po::value<int>(), "number of iterations per render, default 20")
-            ("size,s", po::value<int>(), "radius of the brush when drawing, default 15")
-            ("temp,t", po::value<double>(), "temperature of the brush, default 2.0")
+            ("help,h", "print this message.")
+            ("height,y", po::value<int>()->default_value(600), "set height of the window.")
+            ("width,x", po::value<int>()->default_value(800), "set width of the window")
+            ("alpha,a", po::value<double>()->default_value(0.05), "alpha parameter of heat equation.")
+            ("iter,i", po::value<int>()->default_value(20), "number of iterations per render.")
+            ("size,s", po::value<int>()->default_value(15), "radius of the brush when drawing.")
+            ("temp,t", po::value<double>()->default_value(1.3), "temperature of the brush.")
             ("debug,d", "debug flag to print extra states' info");
 
         po::variables_map vmap;
@@ -174,20 +174,13 @@ void parse_arguments(int argc, char** argv)
             std::cout << desc;
             exit(0);
         }
-        if(vmap.count("height"))
-            SIZEY = vmap["height"].as<int>();
-        if(vmap.count("width"))
-            SIZEX = vmap["width"].as<int>();
-        if(vmap.count("alpha"))
-            alpha = vmap["alpha"].as<double>();
-        if(vmap.count("iter"))
-            ITER = vmap["iter"].as<int>();
-        if(vmap.count("size"))
-            RADIUS = vmap["size"].as<int>();
-        if(vmap.count("temp"))
-            TEMPERATURE = vmap["temp"].as<double>();
-        if(vmap.count("debug"))
-            DEBUG = true;
+        SIZEY = vmap["height"].as<int>();
+        SIZEX = vmap["width"].as<int>();
+        alpha = vmap["alpha"].as<double>();
+        ITER = vmap["iter"].as<int>();
+        RADIUS = vmap["size"].as<int>();
+        TEMPERATURE = vmap["temp"].as<double>();
+        if(vmap.count("debug")) DEBUG = true;
     }
     catch(std::exception& e)
     {
@@ -214,6 +207,13 @@ int main( int argc, char** argv )
     cv::namedWindow(name, cv::WINDOW_AUTOSIZE);
     cv::setMouseCallback(name, mouse_callback, nullptr);
     int val,x,y;
+
+    auto vcap = new cv::VideoWriter("heat2d_video.avi",
+            CV_FOURCC('M','J','P','G'),
+            120,
+            cv::Size(SIZEX, SIZEY),
+            true);
+
     while( (val = cv::waitKey(1000/60)) != 27) // escape
     {
         if(val == 32) //space
@@ -233,8 +233,11 @@ int main( int argc, char** argv )
             evolve(&data, &buffer);
         }
         image = cv::Mat(SIZEY, SIZEX, CV_64F, data);
+        vcap->write(color);
         cv::imshow(name, color);
     }
+
+    vcap->release();
 
     delete[] data;
     delete[] buffer;
