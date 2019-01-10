@@ -1,8 +1,9 @@
 # Collection of visual simulators
+![Alt Text](media/front_cube_demo.gif)
 
 Here I am going to drop simulators with visual component. Or, in case of very slow evolution process, with output video in popular formats.
 
-Current status: very raw.
+Current status: _in development_.
 
 Dependencies for C++ programs: OpenCV, OpenMP, OpenGL, glm, glwf, glad, boost
 
@@ -14,3 +15,47 @@ Dependencies for C++ programs: OpenCV, OpenMP, OpenGL, glm, glwf, glad, boost
 * glm: `sudo apt-get install libglm-dev libglm-doc`
 * glwf: `sudo apt-get install libglfw3-dev libglfw3-doc`
 * glad: todo: add script to load glad files to /user/include
+
+
+## 2d Heat solver
+This simulator propagate heat convection as a function of time. By touching canvas, user can add energy to the system in place where was drawed by user. Uses OpenCV for rendering.
+
+![Alt Text](media/front_heat2d_demo.gif)
+
+### Usage:
+```console
+cd heat2d
+make
+```
+
+To list available parameters:
+```console
+./heat_demo -h
+Allowed arguments:
+  -h [ --help ]                         print this message.
+  -y [ --height ] arg (=600)            set height of the window.
+  -x [ --width ] arg (=800)             set width of the window
+  -a [ --alpha ] arg (=0.05)            alpha parameter of heat equation.
+  -i [ --iter ] arg (=20)               number of iterations per render.
+  -s [ --size ] arg (=15)               radius of the brush when drawing.
+  -t [ --temp ] arg (=1.3)              temperature of the brush.
+  -d [ --debug ]                        debug flag to print extra states' info
+```
+For example:
+`./heat_demo -t1 -a1e-4 -s20`
+
+## 3d Heat solver
+THis is similar to 2d simulator but this one support free camera. Uses OpenGL GLSL with OpenCV to render.
+
+INSERT GIF OF USE
+
+### Usage:
+```console
+cd heat3d
+make
+```
+
+To list available parameters:
+```console
+./heat3d_demo -h
+```
