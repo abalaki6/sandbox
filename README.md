@@ -58,4 +58,25 @@ make
 To list available parameters:
 ```console
 ./heat3d_demo -h
+-h [ --help ]                         print this message.
+  --dt arg (=0.0001)                    timestep per iteration.
+  --dx arg (=0.01)                      space step in Ox, for stability dt <
+                                        dr^2.
+  --dy arg (=0.01)                      space step in Oy, for stability dt <
+                                        dr^2.
+  --dz arg (=0.01)                      space step in Oz, for stability dt <
+                                        dr^2.
+  -a [ --alpha ] arg (=0.05)            thermal diffusivity of the system.
+  -d [ --debug ]                        run with debug information.
+  -i [ --iter ] arg (=10)               number of iterations per frame.
+  --width arg (=800)                    width of the window in startup.
+  --height arg (=600)                   height of the window in startup.
+  --yaw arg (=-90)                      initial yaw value of the camera.
+  --pitch arg (=0)                      initial pitch value of the camera.
+  --speed arg (=1.5)                    speed that camera moves in the front
+                                        direction.
+  --mouse arg (=0.1                     mouse sesitivity while zooming.
+  --fov arg (=90)                       fov of the camera.
+  --video arg (=heat3dg_video.avi)      name of recorded video, video is
+                                        recorded if debug flag specified.
 ```
