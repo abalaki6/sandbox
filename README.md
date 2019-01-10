@@ -14,7 +14,6 @@ Dependencies for C++ programs: OpenCV, OpenMP, OpenGL, glm, glwf, glad, boost
 * boost: `sudo apt-get install libboost-all-dev`
 * glm: `sudo apt-get install libglm-dev libglm-doc`
 * glwf: `sudo apt-get install libglfw3-dev libglfw3-doc`
-* glad: todo: add script to load glad files to /user/include
 
 
 ## 2d Heat solver
@@ -47,7 +46,6 @@ For example:
 ## 3d Heat solver
 THis is similar to 2d simulator but this one support free camera. Uses OpenGL GLSL with OpenCV to render.
 
-INSERT GIF OF USE
 
 ### Usage:
 ```console
