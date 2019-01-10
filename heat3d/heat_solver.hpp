@@ -4,8 +4,10 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "heat_parameters.hpp"
 #include <iostream>
+#include <thread>
+#include <memory.h>
+#include "heat_parameters.hpp"
 #include <opencv2/opencv.hpp>
 #include "shader.hpp"
 
@@ -19,18 +21,26 @@ class heat_solver
 
     double *state;           // XxYxZ array of current state
     double *buffer;          // XxYxZ buffer
-    double *heat_map;        // XxyxZx3 array of current state using heat mapping
+    float *heat_map;         // XxyxZx3 array of current state using heat mapping
 
     const shader &program;   // program to render
-    GLuint posVAO;           // VAO of possitions buffer in glsl
+    GLuint VAO;              // VAO of buffer in glsl
 
-    GLuint bind_vertex_location();
+    std::thread *worker;     // thread that does map updates
+    bool run_thread;         // flag to stop computations
+
+    float* temp;
+
+    void bind_vertex_location();
 public:
     heat_solver(const shader&);
 
     void evolve();
     void update_color_map();
     void render();
+
+    void run();
+    void stop();
 
     double *get_current_state_3channes();
 

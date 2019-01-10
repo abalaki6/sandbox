@@ -15,7 +15,7 @@ delta_x(1e-2),
 delta_y(1e-2),
 delta_z(1e-2),
 alpha(0.05),
-num_iter(20),
+num_iter(10),
 debug(false),
 width(800),
 height(600),
@@ -24,7 +24,7 @@ camera_pitch(0),
 camera_speed(1.5),
 camera_mouse_sensitivity(0.1),
 camera_fov(90.),
-capture_name("heat3d_video.avi")
+capture_name("heat3dg_video.avi")
 {
     desc.add_options()
         (

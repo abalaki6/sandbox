@@ -2,7 +2,7 @@
 
 
 
-GLuint heat_solver::bind_vertex_location()
+void heat_solver::bind_vertex_location()
 {
     #ifdef SIX
     #define TEMP_SIX SIX
@@ -34,6 +34,7 @@ GLuint heat_solver::bind_vertex_location()
     auto dy = heat_parameters::get_instance().get_dy();
     auto dz = heat_parameters::get_instance().get_dz();
 
+    double *c = state;
     #pragma omp parallel for private(i), shared(X,Y,Z,pos,dx,dy,dz)
     for(i = 0; i < X; i++)
     {
@@ -53,9 +54,8 @@ GLuint heat_solver::bind_vertex_location()
                 loc[2] = z;
                 // for debug define color map as well
                 #if NUM_PAR == SIX
-                    loc[3] = 0.0f;
-                    loc[4] = 1.0f;
-                    loc[5] = 0.0f;
+                    c[0] = 1.0f;
+                    c++;
                 #endif
                 // iterate to next element after debug replace 6 to 3
                 loc += NUM_PAR; 
@@ -63,13 +63,14 @@ GLuint heat_solver::bind_vertex_location()
         }
     }
     
-    GLuint VBO, VAO;
+
+    GLuint VBO[2], VAO;
     
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(2, VBO);
     glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, NUM_POINTS * sizeof(float), pos, GL_STATIC_DRAW);
 
     // position attribute
@@ -78,15 +79,25 @@ GLuint heat_solver::bind_vertex_location()
     
     #if NUM_PAR == SIX
         // color attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, NUM_PAR * sizeof(float), (void*)(3 * sizeof(float)));
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        glBufferData(GL_ARRAY_BUFFER, NUM_POINTS  / 2 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(glGetAttribLocation(program.get_id(), "aColor"));
+    #else
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        glBufferData(GL_ARRAY_BUFFER, NUM_POINTS * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, NUM_PAR * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(glGetAttribLocation(program.get_id(), "aColor"));
+
     #endif
+
 
     program.use_program();
 
 
     // after mapping vertces delete CPU buffer
-    delete[] pos;
+    // delete[] pos;
+    temp = pos;
     // undef temporal constants
     #undef SIX
     #undef THREE
@@ -107,7 +118,8 @@ GLuint heat_solver::bind_vertex_location()
     #undef TEMP_NUM_PAR
     #endif
 
-    return VAO;
+
+    this->VAO = VAO;
 }
 
 heat_solver::heat_solver(const shader& program)
@@ -119,12 +131,15 @@ heat_solver::heat_solver(const shader& program)
     Y = 1 / parser.get_dy() + 1;
     Z = 1 / parser.get_dz() + 1;
 
-    posVAO = bind_vertex_location();
+    state = new double[X*Y*Z];
+    buffer = new double[X*Y*Z];
+    heat_map = new float[X*Y*Z*3];
+
+    bind_vertex_location();
 }
 
 void heat_solver::evolve()
 {
-    return;
     auto num_iter = heat_parameters::get_instance().get_num_iter();
     auto dt = heat_parameters::get_instance().get_dt();
     auto dx = heat_parameters::get_instance().get_dx();
@@ -132,20 +147,27 @@ void heat_solver::evolve()
     auto dz = heat_parameters::get_instance().get_dz();
     auto alpha = heat_parameters::get_instance().get_alpha();
 
-    size_t i,j, k;
-    for(size_t it = 0; it < num_iter; it++)
-    {
+    memcpy(buffer, state, X*Y*Z * sizeof(float));
 
+    size_t i,j, k, iter=0;
+    while(run_thread)
+    {
         #pragma omp parallel for private(i,j,k) shared(state, buffer, alpha, dx, dy dz, dt)
         for(i = 0; i < X; i++)
         {
+            size_t x_0 = i * Y * Z;
             // add special cases for boudaries
-            for(j = 0; i < Y; j++)
+            for(j = 0; j < Y; j++)
             {
+                size_t y_0 = j * Z; 
                 // add special cases for boudaries
                 for(k = 0; k < Z; k++)
                 {
                     // todo implementation
+                    size_t z_0 = k;
+
+                    // for demo make faint
+                    buffer[x_0 + y_0 + z_0] = state[x_0 + y_0 + z_0] * 0.9999;
                 }
             }
         }
@@ -154,17 +176,60 @@ void heat_solver::evolve()
         double *t = state;
         state = buffer;
         buffer = t;
+        
+        iter++;
+        if(iter == num_iter)
+        {
+            printf("updating map\n");
+            iter = 0;
+            update_color_map();
+        }
     }
 }
 
 void heat_solver::update_color_map()
 {
 
+    cv::Mat dest, converted, form;
+    // #pragma omp parallel for private(i), shared(n, state, heat_state)
+    for(size_t i = 0; i < Z; i++)
+    {
+        // convert slice to 8UC
+        cv::Mat source(X,Y, CV_64F, state + i*X*Y);
+        source.convertTo(converted, CV_8UC1, 255.);
+        // apply heat map to slice
+        cv::applyColorMap(converted, dest, cv::COLORMAP_JET);
+        cv::cvtColor(dest, dest, cv::COLOR_BGR2RGB);
+        dest.convertTo(form, CV_32F, 1/255.);
+        // store slice in map
+        memcpy(heat_map + i*3*X*Y*sizeof(float), (void*)dest.data, 3*X*Y*sizeof(float)); 
+        // cur_map_ptr += n;
+        // cur_state_ptr += n;
+    }
+    printf("%u, %f, %u %u %u\n", dest.data[0], state[0], heat_map[0], heat_map[1], heat_map[2]);
 }
+
+
+void heat_solver::run()
+{
+    run_thread = true;
+    update_color_map();
+    worker = new std::thread(&heat_solver::evolve, this);
+}
+
+void heat_solver::stop()
+{
+    run_thread = false;
+    worker->join();
+
+    delete worker;
+}
+
 
 void heat_solver::render()
 {
-    glBindVertexArray(posVAO);
+    glBindVertexArray(VAO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * X * Y * Z * sizeof(uchar), heat_map);
     glDrawArrays(GL_POINTS, 0, X * Y * Z);
 }
 
@@ -175,4 +240,7 @@ double* heat_solver::get_current_state_3channes()
 
 heat_solver::~heat_solver()
 {
+    delete[] buffer;
+    delete[] heat_map;
+    delete[] state;
 }
