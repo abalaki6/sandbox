@@ -4,25 +4,8 @@
 
 void heat_solver::bind_vertex_location()
 {
-    #ifdef SIX
-    #define TEMP_SIX SIX
-    #undef SIX
-    #endif
-
-    #ifdef THREE
-    #define TEMP_THREE THREE
-    #undef THREE
-    #endif
-
-    #ifdef NUM_PAR
-    #define TEMP_NUM_PAR NUM_PAR
-    #undef NUM_PAR
-    #endif
-
-    #define SIX 6
-    #define THREE 3
     // replcate to 3 after done debugging grid rendering
-    #define NUM_PAR SIX
+    #define NUM_PAR 3
 
 
     const size_t NUM_POINTS = NUM_PAR * X * Y * Z;
@@ -53,10 +36,8 @@ void heat_solver::bind_vertex_location()
                 loc[1] = y;
                 loc[2] = z;
                 // for debug define color map as well
-                #if NUM_PAR == SIX
-                    c[0] = 1.0f;
-                    c++;
-                #endif
+                c[0] = 1.0f;
+                c++;
                 // iterate to next element after debug replace 6 to 3
                 loc += NUM_PAR; 
             }
@@ -75,49 +56,18 @@ void heat_solver::bind_vertex_location()
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, NUM_PAR * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(glGetAttribLocation(program.get_id(), "aPos"));
-    
-    #if NUM_PAR == SIX
-        // color attribute
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, NUM_POINTS  / 2 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(glGetAttribLocation(program.get_id(), "aColor"));
-    #else
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, NUM_POINTS * sizeof(float), NULL, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, NUM_PAR * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(glGetAttribLocation(program.get_id(), "aColor"));
-
-    #endif
-
+    program.enable_attr_arr("aPos");
+    // color attribute
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, NUM_POINTS * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    program.enable_attr_arr("aColor");
 
     program.use_program();
 
 
     // after mapping vertces delete CPU buffer
-    // delete[] pos;
-    temp = pos;
-    // undef temporal constants
-    #undef SIX
-    #undef THREE
-    #undef NUM_PAR
-    // define back old marocs
-    #ifdef TEMP_SIX
-    #define SIX TEMP_SIX
-    #undef TEMP_SIX
-    #endif
-
-    #ifdef TEMP_THREE
-    #define THREE TEMP_THREE
-    #undef TEMP_THREE
-    #endif
-
-    #ifdef TEMP_NUM_PAR
-    #define NUM_PAR TEMP_NUM_PAR
-    #undef TEMP_NUM_PAR
-    #endif
-
+    delete[] pos;
 
     this->VAO = VAO;
 }
@@ -126,7 +76,7 @@ heat_solver::heat_solver(const shader& program)
 :program(program)
 {
     auto &parser = heat_parameters::get_instance();
-    // render in domain [-1, 1]^3
+    // render in domain [0, 1]^3
     X = 1 / parser.get_dx() + 1;
     Y = 1 / parser.get_dy() + 1;
     Z = 1 / parser.get_dz() + 1;
@@ -167,7 +117,7 @@ void heat_solver::evolve()
                     size_t z_0 = k;
 
                     // for demo make faint
-                    buffer[x_0 + y_0 + z_0] = state[x_0 + y_0 + z_0] * 0.9999;
+                    buffer[x_0 + y_0 + z_0] = state[x_0 + y_0 + z_0] * 0.999;
                 }
             }
         }
@@ -180,7 +130,6 @@ void heat_solver::evolve()
         iter++;
         if(iter == num_iter)
         {
-            printf("updating map\n");
             iter = 0;
             update_color_map();
         }
@@ -202,11 +151,8 @@ void heat_solver::update_color_map()
         cv::cvtColor(dest, dest, cv::COLOR_BGR2RGB);
         dest.convertTo(form, CV_32F, 1/255.);
         // store slice in map
-        memcpy(heat_map + i*3*X*Y*sizeof(float), (void*)dest.data, 3*X*Y*sizeof(float)); 
-        // cur_map_ptr += n;
-        // cur_state_ptr += n;
+        memcpy(heat_map + i*3*X*Y, (void*)form.data, 3*X*Y*sizeof(float)); 
     }
-    printf("%u, %f, %u %u %u\n", dest.data[0], state[0], heat_map[0], heat_map[1], heat_map[2]);
 }
 
 
@@ -229,7 +175,7 @@ void heat_solver::stop()
 void heat_solver::render()
 {
     glBindVertexArray(VAO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * X * Y * Z * sizeof(uchar), heat_map);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * X * Y * Z * sizeof(float), heat_map);
     glDrawArrays(GL_POINTS, 0, X * Y * Z);
 }
 
