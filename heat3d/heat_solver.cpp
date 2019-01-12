@@ -36,7 +36,15 @@ void heat_solver::bind_vertex_location()
                 loc[1] = y;
                 loc[2] = z;
                 // for debug define color map as well
-                c[0] = 1.0f;
+                auto d = (x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5);
+                if(d < 0.25 && d >0.04)
+                {
+                    c[0] = 1.0f;
+                }
+                else
+                {
+                    c[0] = 0.0f;
+                }
                 c++;
                 // iterate to next element after debug replace 6 to 3
                 loc += NUM_PAR; 
@@ -90,34 +98,40 @@ heat_solver::heat_solver(const shader& program)
 
 void heat_solver::evolve()
 {
-    auto num_iter = heat_parameters::get_instance().get_num_iter();
-    auto dt = heat_parameters::get_instance().get_dt();
-    auto dx = heat_parameters::get_instance().get_dx();
-    auto dy = heat_parameters::get_instance().get_dy();
-    auto dz = heat_parameters::get_instance().get_dz();
-    auto alpha = heat_parameters::get_instance().get_alpha();
+    auto num_iter = heat_parameters::num_iter();
+    auto dt = heat_parameters::dt();
+    auto dx = heat_parameters::dx();
+    auto dy = heat_parameters::dy();
+    auto dz = heat_parameters::dz();
+    auto alpha = heat_parameters::alpha();
 
     memcpy(buffer, state, X*Y*Z * sizeof(float));
 
     size_t i,j, k, iter=0;
     while(run_thread)
     {
+        auto u = state; // simplify notation to 
         #pragma omp parallel for private(i,j,k) shared(state, buffer, alpha, dx, dy dz, dt)
-        for(i = 0; i < X; i++)
+        for(i = 1; i < X-1; i++)
         {
             size_t x_0 = i * Y * Z;
             // add special cases for boudaries
-            for(j = 0; j < Y; j++)
+            for(j = 1; j < Y-1; j++)
             {
                 size_t y_0 = j * Z; 
                 // add special cases for boudaries
-                for(k = 0; k < Z; k++)
+                for(k = 1; k < Z-1; k++)
                 {
                     // todo implementation
                     size_t z_0 = k;
+                    size_t l = x_0 + y_0 + z_0;
 
                     // for demo make faint
-                    buffer[x_0 + y_0 + z_0] = state[x_0 + y_0 + z_0] * 0.999;
+                    buffer[l] = u[l] + alpha * dt * (
+                        /* z axis */ (u[l+1] - 2 * u[l] + u[l-1]) / (dz*dz) + 
+                        /* y axis */ (u[l+Z] - 2 * u[l] + u[l-Z]) / (dy*dy) + 
+                        /* x axis */ (u[l+Z*Y] - 2 * u[l] + u[l-Z*Y]) / (dx*dx)
+                    );
                 }
             }
         }
