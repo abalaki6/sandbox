@@ -28,11 +28,11 @@ int main(int argc, char const *argv[])
     char *screen_pixels = nullptr;
     if(DEBUG)
     {
-        vcap = new cv::VideoWriter(heat_parameters::get_instance().get_capture_name(),
+        vcap = new cv::VideoWriter(heat_parameters::capture_name(),
             CV_FOURCC('M','J','P','G'),
-            120,
-            cv::Size(heat_parameters::get_instance().get_window_width(),
-                    heat_parameters::get_instance().get_window_height()),
+            heat_parameters::fps(),
+            cv::Size(heat_parameters::window_width(),
+                    heat_parameters::window_height()),
             true);
 
         if(!vcap)
@@ -42,8 +42,8 @@ int main(int argc, char const *argv[])
         else
         {
             screen_pixels = new char[3 *
-                heat_parameters::get_instance().get_window_width() *
-                heat_parameters::get_instance().get_window_height()];
+                heat_parameters::window_width() *
+                heat_parameters::window_height()];
         }
     }
 
@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
             glfwSetWindowShouldClose(window, true);
         }
         // clean buffers
-        glClearColor(1.f, 1.f, 1.f, 1.0f);
+        glClearColor(0.f, 0.f, 0.501961f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         camera::get_camera().update_shader();
         // single evolution
@@ -73,15 +73,15 @@ int main(int argc, char const *argv[])
         {
             glReadPixels(0,
                 0,
-                heat_parameters::get_instance().get_window_width(),
-                heat_parameters::get_instance().get_window_height(),
+                heat_parameters::window_width(),
+                heat_parameters::window_height(),
                 GL_BGR,
                 GL_UNSIGNED_BYTE,
                 screen_pixels
             );
             cv::Mat frame(
-                heat_parameters::get_instance().get_window_height(),
-                heat_parameters::get_instance().get_window_width(),
+                heat_parameters::window_height(),
+                heat_parameters::window_width(),
                 CV_8UC3,
                 screen_pixels
             );
@@ -117,8 +117,8 @@ GLFWwindow* init_gl()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    auto w = heat_parameters::get_instance().get_window_width();
-    auto h = heat_parameters::get_instance().get_window_height();
+    auto w = heat_parameters::window_width();
+    auto h = heat_parameters::window_height();
     GLFWwindow* window = glfwCreateWindow(w, h, "heat3d demo", NULL, NULL);
     if(window == NULL)
     {

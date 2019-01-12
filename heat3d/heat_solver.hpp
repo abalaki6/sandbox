@@ -29,8 +29,6 @@ class heat_solver
     std::thread *worker;     // thread that does map updates
     bool run_thread;         // flag to stop computations
 
-    float* temp;
-
     void bind_vertex_location();
 public:
     heat_solver(const shader&);

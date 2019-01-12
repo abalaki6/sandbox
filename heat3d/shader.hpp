@@ -31,6 +31,7 @@ public:
 
     // shader setters
     void set_mat4(const std::string& name, const glm::mat4& mat) const;
+    void enable_attr_arr(const std::string& name) const;
 };
 
 #endif // SHADER_H
