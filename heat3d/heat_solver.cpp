@@ -95,12 +95,13 @@ heat_solver::heat_solver(const shader& program)
     Y = 1 / parser.get_dy() + 1;
     Z = 1 / parser.get_dz() + 1;
 
+    bind_vertex_location();
+    
     state = new double[X*Y*Z];
     buffer = new double[X*Y*Z];
     heat_map = new float[X*Y*Z*3];
 
     load_initial_state();
-    bind_vertex_location();
 }
 
 void heat_solver::evolve()

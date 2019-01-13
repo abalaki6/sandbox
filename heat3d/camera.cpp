@@ -34,9 +34,9 @@ camera& camera::use_free_camera(GLFWwindow* window, shader* program)
     _camera.mouse_sensitivity = params.get_camera_mouse_sensitivity();
     _camera.aspect = (double)params.get_window_width() / params.get_window_height();
 
-    _camera.position = {0.5,0.5,0.5};
+    _camera.position = {0.40,0.34,1.25};
     _camera.w_up = {0,1,0};
-    _camera.direction = {0,1,0};
+    _camera.direction = {0.13,0.19,-0.97};
 
     _camera.normalize_basis();
     _camera.input_handler = &camera::process_input_free_camera;
