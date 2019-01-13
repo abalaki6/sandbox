@@ -53,7 +53,7 @@ For example:
 
 This is similar to 2d simulator but this one support free camera. Uses OpenGL GLSL with OpenCV to render.
 
-![Alt Text](media/front_temp_heat3d_demo.png)
+![Alt Text](media/front_temp_heat3d_demo.gif)
 
 ### Usage
 
