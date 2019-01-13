@@ -108,29 +108,41 @@ void heat_solver::evolve()
     memcpy(buffer, state, X*Y*Z * sizeof(float));
 
     size_t i,j, k, iter=0;
+
+    size_t ux, lx, uy, ly, uz, lz;
     while(run_thread)
     {
         auto u = state; // simplify notation to 
         #pragma omp parallel for private(i,j,k) shared(state, buffer, alpha, dx, dy dz, dt)
-        for(i = 1; i < X-1; i++)
+        for(i = 0; i < X; i++)
         {
             size_t x_0 = i * Y * Z;
-            // add special cases for boudaries
-            for(j = 1; j < Y-1; j++)
+
+            ux = (i != X - 1) * Y*Z;
+            lx = -(i != 0) * Y*Z;
+
+            for(j = 0; j < Y; j++)
             {
                 size_t y_0 = j * Z; 
-                // add special cases for boudaries
-                for(k = 1; k < Z-1; k++)
+
+                uy = (j != Y - 1) * Z;
+                ly = -(j != 0) * Z;
+
+                for(k = 0; k < Z; k++)
                 {
-                    // todo implementation
                     size_t z_0 = k;
                     size_t l = x_0 + y_0 + z_0;
 
-                    // for demo make faint
+                    uz = (k != Z - 1);
+                    lz = -(k != 0);
+                
+                    uz = (k == Z - 1 ? 0 : 1);
+                    lz = (k == 0 ? 0 : -1);
+                    
                     buffer[l] = u[l] + alpha * dt * (
-                        /* z axis */ (u[l+1] - 2 * u[l] + u[l-1]) / (dz*dz) + 
-                        /* y axis */ (u[l+Z] - 2 * u[l] + u[l-Z]) / (dy*dy) + 
-                        /* x axis */ (u[l+Z*Y] - 2 * u[l] + u[l-Z*Y]) / (dx*dx)
+                        /* z axis */ (u[l+uz] + u[l+lz] - 2 * u[l]) / (dz*dz) + 
+                        /* y axis */ (u[l+uy] + u[l+ly] - 2 * u[l]) / (dy*dy) + 
+                        /* x axis */ (u[l+ux] + u[l+lx] - 2 * u[l]) / (dx*dx)
                     );
                 }
             }
@@ -141,6 +153,16 @@ void heat_solver::evolve()
         state = buffer;
         buffer = t;
         
+        if(DEBUG)
+        {
+            float sum = 0.0f;
+            #pragma omp parallel for redice(+:sum) private(i,j,k), shared(state)
+            for(i = 0; i < X; i++) for(j = 0; j < Y; j++) for(k = 0; k < Z; k++)
+                sum += state[i * Y * Z + j * Z + k];
+            printf("total energy : %f\n", sum);
+        }
+
+
         iter++;
         if(iter == num_iter)
         {

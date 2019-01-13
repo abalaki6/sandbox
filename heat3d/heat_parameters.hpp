@@ -78,9 +78,6 @@ public:
     static inline size_t fps() {return heat_parameters::get_instance().get_fps();}
     static inline std::string source_name() {return heat_parameters::get_instance().get_source_name();}
 
-
-
-
     ~heat_parameters(){};
 
     heat_parameters(const heat_parameters&) = delete;
