@@ -8,7 +8,7 @@
 *.os
 *.mp4
 *.avi
-
+*.bin
 
 !Makefile
 !*.c
