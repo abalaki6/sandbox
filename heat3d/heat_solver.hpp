@@ -7,6 +7,9 @@
 #include <iostream>
 #include <thread>
 #include <memory.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "heat_parameters.hpp"
 #include <opencv2/opencv.hpp>
 #include "shader.hpp"
@@ -29,6 +32,7 @@ class heat_solver
     std::thread *worker;     // thread that does map updates
     bool run_thread;         // flag to stop computations
 
+    void load_initial_state();
     void bind_vertex_location();
 public:
     heat_solver(const shader&);

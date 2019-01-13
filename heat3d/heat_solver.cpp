@@ -5,23 +5,18 @@
 void heat_solver::bind_vertex_location()
 {
     // replcate to 3 after done debugging grid rendering
-    #define NUM_PAR 3
-
-
+    const size_t NUM_PAR = 3;
     const size_t NUM_POINTS = NUM_PAR * X * Y * Z;
-    float *pos = new float[NUM_POINTS]; // fo debug 6 , replace to 3 in release
-    // predefine locations
+    float *pos = new float[NUM_POINTS];
     size_t i;
 
     auto dx = heat_parameters::get_instance().get_dx();
     auto dy = heat_parameters::get_instance().get_dy();
     auto dz = heat_parameters::get_instance().get_dz();
 
-    double *c = state;
     #pragma omp parallel for private(i), shared(X,Y,Z,pos,dx,dy,dz)
     for(i = 0; i < X; i++)
     {
-        // replace 6 to 3 after debugging
         auto *loc = pos + NUM_PAR * i * Y * Z; 
 
         float x = i * dx;
@@ -35,24 +30,12 @@ void heat_solver::bind_vertex_location()
                 loc[0] = x;
                 loc[1] = y;
                 loc[2] = z;
-                // for debug define color map as well
-                auto d = (x-0.5)*(x-0.5) + (y-0.5)*(y-0.5) + (z-0.5)*(z-0.5);
-                if(d < 0.25 && d >0.04)
-                {
-                    c[0] = 1.0f;
-                }
-                else
-                {
-                    c[0] = 0.0f;
-                }
-                c++;
-                // iterate to next element after debug replace 6 to 3
+                // iterate to next element
                 loc += NUM_PAR; 
             }
         }
     }
     
-
     GLuint VBO[2], VAO;
     
     glGenVertexArrays(1, &VAO);
@@ -80,6 +63,29 @@ void heat_solver::bind_vertex_location()
     this->VAO = VAO;
 }
 
+void heat_solver::load_initial_state()
+{
+    std::string filename = heat_parameters::source_name();
+
+    int fd = open(filename.c_str(), O_RDONLY);
+    
+    struct stat sb;
+    memset(&sb, 0, sizeof(struct stat));
+    fstat(fd, &sb);
+    
+    if(fd == -1)
+    {
+        std::cerr << "ERROR::HEAT_SOLVER::LOAD_INITIAL_STATE: Failed to open file with initial state." << std::endl;
+        exit(3);
+    }
+
+    void* buffer = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    memcpy(state, buffer, sb.st_size);
+
+    munmap(buffer, sb.st_size);
+    close(fd);
+}
+
 heat_solver::heat_solver(const shader& program)
 :program(program)
 {
@@ -93,6 +99,7 @@ heat_solver::heat_solver(const shader& program)
     buffer = new double[X*Y*Z];
     heat_map = new float[X*Y*Z*3];
 
+    load_initial_state();
     bind_vertex_location();
 }
 
@@ -112,7 +119,7 @@ void heat_solver::evolve()
     size_t ux, lx, uy, ly, uz, lz;
     while(run_thread)
     {
-        auto u = state; // simplify notation to 
+        auto u = state; // to simplify notation
         #pragma omp parallel for private(i,j,k) shared(state, buffer, alpha, dx, dy dz, dt)
         for(i = 0; i < X; i++)
         {
